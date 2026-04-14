@@ -23,14 +23,16 @@ syserroranl/
 │   ├── __init__.py
 │   ├── systems.py                # 系统管理 API
 │   ├── nodes.py                  # 节点管理 API（含批量导入）
-│   └── edges.py                  # 边管理 API（含自动初始化）
+│   ├── edges.py                  # 边管理 API（含自动初始化）
+│   └── server_query.py           # IP 查询 API（SHA256 哈希匹配）
 │
 ├── static/                       # 前端静态资源
 │   ├── index.html                # 单页应用主文件（Vue 3 + Tailwind）
 │   ├── vue.global.prod.js        # Vue 3 生产版本
 │   ├── tailwind.min.css          # Tailwind CSS 样式
 │   ├── axios.min.js               # HTTP 客户端
-│   └── d3.v7.min.js               # D3.js 图谱可视化
+│   ├── d3.v7.min.js               # D3.js 图谱可视化
+│   └── xlsx.full.min.js          # SheetJS Excel 处理（离线）
 │
 ├── output/                       # 打包输出目录
 │   ├── 启动应用.bat
@@ -42,7 +44,6 @@ syserroranl/
 ├── temp_check*.py                # 临时调试脚本
 ├── test_api.py                   # API 测试脚本
 ├── syserroranl.spec              # PyInstaller 打包配置
-├── syserroranl.rar               # 旧版备份压缩包
 ├── PROJECT_REPORT.md             # 项目报告
 └── README.md                    # 项目说明文档
 ```
@@ -155,12 +156,18 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000
 
 ### 5. 系统图谱
 - D3.js 可视化拓扑图
+- **贝塞尔曲线边**：同对节点多边自动平行偏移绑扎
+- **四叉树碰撞检测**：`forceCollide` 按节点类型动态半径，防止标签叠加
+- **集群 Hull 凸包**：同集群服务器节点自动圈起分组
+- **路径高亮**：点击节点高亮上下游依赖路径（橙线上游/蓝线下游）
+- **缩放指示器**：实时显示当前缩放比例
+- **节点类型力参数**：按层级调整斥力大小，顶层更强
 - 支持拖拽布局
 - 边权重编辑
 
 ### 6. 导入导出
-- 导出全部数据为 JSON
-- 批量导入节点（含 insertID 去重）
+- **导出**：按样表格式导出为 Excel（服务器名称、IP、组件名称、组件描述、服务器所属集群、集群所属节点）
+- **导入**：3步骤向导流程（上传 Excel → 加密设置 → 确认导入），支持 insertID 去重
 - 自动初始化边
 
 ---
@@ -200,6 +207,12 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000
 | GET | /to/{node_id} | 获取指向某节点的边 |
 | POST | /batch | 批量创建边 |
 
+### 服务器查询 `/api/server-query`
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /{system_id} | 查询系统内所有服务器（返回 IP 哈希列表） |
+| GET | /{system_id}/match | IP 哈希匹配查询（支持模糊匹配） |
+
 ### 统计 `/api/systems/{system_id}/stats`
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -217,6 +230,7 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000
 | 样式 | Tailwind CSS |
 | 可视化 | D3.js v7 |
 | HTTP 客户端 | Axios |
+| Excel 处理 | SheetJS (xlsx.js) |
 | 打包工具 | PyInstaller |
 
 ---
@@ -297,3 +311,5 @@ pyinstaller syserroranl.spec
 2. **批量导入**：使用 insertID 实现去重功能
 3. **边初始化**：手动创建的边不受 cluster 字段影响
 4. **名称重复**：集群/服务器/组件类型允许同名，其他类型不允许
+5. **离线运行**：所有依赖已打包到本地，无需网络连接
+6. **路径无关**：使用绝对路径，可部署到任意目录
