@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button onclick="testApi()">Test API</button>
+    <pre id="result"></pre>
+    <script>
+        async function testApi() {
+            try {
+                const res = await axios.get('/api/systems');
+                document.getElementById('result').textContent = JSON.stringify(res.data, null, 2);
+            } catch (err) {
+                document.getElementById('result').textContent = 'Error: ' + err.message;
+            }
+        }
+        testApi();
+    </script>
+</body>
+</html>
